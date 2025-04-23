@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Banco de Horas</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #8effdb;
+      padding: 20px;
+    }
+    .container {
+      max-width: 270px;
+      margin: auto;
+      background: rgb(190, 255, 243);
+      padding: 30px;
+      border-radius: 45px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+    h3 {
+      text-align: center;
+      color: #333;
+      font-size: 16px;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: inherit;
+    }
+    input[type="text"] {
+      width: 95%;
+      padding: 8px;
+      margin-top: 5px;
+      border-radius: 10px;
+      border: 1px solid #ffffff;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px;
+      width: 100%;
+      background-color: #00876a;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #00dba4;
+    }
+    .resultado {
+      margin-top: 20px;
+      font-size: 18px;
+      text-align: center;
+    }
+
+    .label_observacao{
+      font-size: 13px;
+      color: #ff0000;
+      margin-top: 10px;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h3>CONTROLE DE BANCO DE HORAS</h3>
+
+    <label class="label_observacao">Os campos <strong>HORÁRIO NORMAL</strong> deverão ser preenchidos
+    com o horário que você deveria entrar normalmente (Ex: 08:00 as 18:00). </label>
+
+    <br>
+
+    <label>Entrada - <strong>HORÁRIO NORMAL</strong></label>
+    <input type="text" id="entradaOficial" placeholder="08:00" oninput="formatarHora(this)">
+
+    <label>Saída - <strong>HORÁRIO NORMAL</strong></label>
+    <input type="text" id="saidaOficial" placeholder="17:00" oninput="formatarHora(this)">
+
+    <label>Entrada</label>
+    <input type="text" id="entradaReal" placeholder="08:10" oninput="formatarHora(this)">
+
+    <label>Saída</label>
+    <input type="text" id="saidaReal" placeholder="17:20" oninput="formatarHora(this)">
+
+    <button onclick="calcularBancoHoras()">Calcular</button>
+
+    <div class="resultado" id="resultado"></div>
+  </div>
+
+  <script>
+    let saldoTotal = 0;
+
+    function validarHorario(horario) {
+      const regex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+      return regex.test(horario);
+    }
+
+    function toMinutes(hora) {
+      const [h, m] = hora.split(':').map(Number);
+      return h * 60 + m;
+    }
+
+    function calcularBancoHoras() {
+      const entradaOficial = document.getElementById('entradaOficial').value.trim();
+      const saidaOficial = document.getElementById('saidaOficial').value.trim();
+      const entradaReal = document.getElementById('entradaReal').value.trim();
+      const saidaReal = document.getElementById('saidaReal').value.trim();
+
+      const campos = [entradaOficial, saidaOficial, entradaReal, saidaReal];
+      if (!campos.every(validarHorario)) {
+        alert('Preencha todos os campos no formato hh:mm (ex: 08:00)');
+        return;
+      }
+
+      const entradaOficialMin = toMinutes(entradaOficial);
+      const saidaOficialMin = toMinutes(saidaOficial);
+      const entradaRealMin = toMinutes(entradaReal);
+      const saidaRealMin = toMinutes(saidaReal);
+
+      const diffEntrada = entradaOficialMin - entradaRealMin; // Positivo = adiantado
+      const diffSaida = saidaRealMin - saidaOficialMin; // Positivo = saiu depois
+
+      const saldoDia = diffEntrada + diffSaida;
+      saldoTotal += saldoDia;
+
+      const sinal = saldoDia >= 0 ? '+' : '';
+      const resultadoTexto = `
+        Saldo: ${formatarMinutos(saldoDia)}<br>
+        Saldo Total: ${formatarMinutos(saldoTotal)}
+      `;
+
+
+      document.getElementById('resultado').innerHTML = resultadoTexto;
+
+      // Limpar apenas os horários reais
+      document.getElementById('entradaReal').value = '';
+      document.getElementById('saidaReal').value = '';
+    }
+
+    function formatarHora(input) {
+        let valor = input.value.replace(/\D/g, ''); // Remove tudo que não for número
+
+        if (valor.length > 4) valor = valor.slice(0, 4); // Limita a 4 dígitos numéricos
+
+        if (valor.length >= 3) {
+            valor = valor.slice(0, 2) + ':' + valor.slice(2);
+        }
+
+        input.value = valor;
+    }
+
+    function formatarMinutos(minutos) {
+        const sinal = minutos < 0 ? '-' : '';
+        const total = Math.abs(minutos);
+        const horas = Math.floor(total / 60);
+        const mins = total % 60;
+
+        const partes = [];
+        if (horas > 0) partes.push(`${horas} hora${horas > 1 ? 's' : ''}`);
+        if (mins > 0 || horas === 0) partes.push(`${mins} minuto${mins > 1 ? 's' : ''}`);
+
+        return sinal + partes.join(' e ');
+    }
+
+  </script>
+</body>
+</html>
